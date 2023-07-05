@@ -8,4 +8,6 @@ openai = [your openai key]
 
 botkey = [your botfather key]
 
+whitelist = [user id so that you can whitelist who's sending messages to your bots]
+
 ````

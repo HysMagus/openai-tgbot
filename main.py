@@ -7,6 +7,7 @@ import openai
 load_dotenv()
 openai.api_key = os.getenv('openai')
 botkey = os.getenv('botkey')
+whitelist = os.getenv('whitelist')
 user = Update.effective_user
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -14,43 +15,47 @@ logging.basicConfig(
 )
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.effective_user
-    #   print(repr(user.first_name), repr(user.last_name))
-#    print('%s %s' % (user.first_name, user.last_name))
-#    print(user.full_name)
-    text = "Hello " + user.first_name
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+    if str(context._user_id) == str(whitelist):
+        user = update.effective_user
+        text = "Hello " + user.first_name + ""
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+    else:
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="You're not whitelisted on the bot!")
 
 async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id, text="Help Commands Include: " " "
                                                                           "/help - Get this message")
 async def change_system_role(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="Hello Mr.")
-
+    if str(context._user_id) == str(whitelist):
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="Hello Mr.")
+    else:
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="You're not whitelisted on the bot!")
 
 async def askgpt(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.effective_user
-    systemrole = "You are a kind helpful assistant. The person you're talking to is named " + str(user.full_name) + " they're your boss"
+    if str(context._user_id) == str(whitelist):
+        user = update.effective_user
+        systemrole = "You are a kind helpful assistant. The person you're talking to is named " + str(user.full_name) + " they're your boss"
 
-    messages = [
-        {"role": "system", "content": systemrole},
-    ]
+        messages = [
+            {"role": "system", "content": systemrole},
+        ]
+        message = update.message.text
+        if message:
+            messages.append(
+                {"role": "user", "content": message},
+            )
+            chat = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo", messages=messages
+            )
 
-    message = update.message.text
-    if message:
-        messages.append(
-            {"role": "user", "content": message},
-        )
-        chat = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo", messages=messages
-        )
+        reply = chat.choices[0].message.content
+        messages.append({"role": "assistant", "content": reply})
+        response = reply
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
+    else:
+        responsewhitelist = "You're not Whitelisted Friend " + str(context._user_id)
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=responsewhitelist)
 
-    reply = chat.choices[0].message.content
-#    print(f"ChatGPT: {reply}")
-    messages.append({"role": "assistant", "content": reply})
-    response = reply
-    print(response)
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
 
 
 if __name__ == '__main__':
