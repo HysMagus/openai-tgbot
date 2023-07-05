@@ -36,13 +36,21 @@ async def change_system_role(update: Update, context: ContextTypes.DEFAULT_TYPE)
         await context.bot.send_message(chat_id=update.effective_chat.id, text=newmessage)
     else:
         await context.bot.send_message(chat_id=update.effective_chat.id, text="You're not whitelisted on the bot!")
+async def reset_system_role(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if str(context._user_id) == str(whitelist):
+        global customsystemprompt
+        customsystemprompt = False
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="System Role Reset, Godspeed")
+
+    else:
+        await context.bot.send_message(chat_id=update.effective_chat.id, text="You're not whitelisted on the bot!")
+
 
 async def askgpt(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if str(context._user_id) == str(whitelist):
         if customsystemprompt == False:
             user = update.effective_user
             systemrole = "You are a kind helpful assistant. The person you're talking to is named " + str(user.full_name) + " they're your boss"
-            print(systemrole)
 
             messages = [
                 {"role": "system", "content": systemrole},
@@ -62,7 +70,6 @@ async def askgpt(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await context.bot.send_message(chat_id=update.effective_chat.id, text=response)
         else:
             systemrole = customsystemprompttext
-            print(systemrole)
 
             messages = [
                 {"role": "system", "content": systemrole},
@@ -95,6 +102,8 @@ if __name__ == '__main__':
     askgpt_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), askgpt)
     help_handler = CommandHandler('help', help)
     change_system_role_handler = CommandHandler('system', change_system_role)
+    reset_system_role_handler = CommandHandler('reset', reset_system_role)
+    application.add_handler(reset_system_role_handler)
     application.add_handler(start_handler)
     application.add_handler(askgpt_handler)
     application.add_handler(change_system_role_handler)
